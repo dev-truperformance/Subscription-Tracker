@@ -1,17 +1,22 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Header } from "@/components/header";
-import { useRouter } from "next/navigation";
-import { useAuthLoader } from "@/components/auth-loader-provider";
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Header } from '@/components/header';
+import { useRouter } from 'next/navigation';
+import { useAuthLoader } from '@/components/auth-loader-provider';
 
 export default function Home() {
   const router = useRouter();
   const { showLoader } = useAuthLoader();
 
-  const handleNavigation = (href: string, message: string = "Loading...") => {
+  const handleNavigation = (href: string, message: string = 'Loading...') => {
     showLoader(message);
     router.push(href);
   };
@@ -33,13 +38,16 @@ export default function Home() {
             <span className="text-primary"> Effortlessly</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Take control of your monthly expenses. Monitor all your subscriptions in one place and never miss a payment again.
+            Take control of your monthly expenses. Monitor all your
+            subscriptions in one place and never miss a payment again.
           </p>
           <div className="flex gap-4 justify-center">
             <Button
               size="lg"
               className="px-8"
-              onClick={() => handleNavigation("/sign-up", "Creating your account...")}
+              onClick={() =>
+                handleNavigation('/sign-up', 'Creating your account...')
+              }
             >
               Get Started
             </Button>
@@ -47,7 +55,9 @@ export default function Home() {
               variant="outline"
               size="lg"
               className="px-8"
-              onClick={() => handleNavigation("/dashboard", "Loading dashboard...")}
+              onClick={() =>
+                handleNavigation('/dashboard', 'Loading dashboard...')
+              }
             >
               View Demo
             </Button>
@@ -62,7 +72,8 @@ export default function Home() {
               </div>
               <CardTitle>Track Everything</CardTitle>
               <CardDescription>
-                Monitor all your subscriptions from Netflix to Spotify in one dashboard
+                Monitor all your subscriptions from Netflix to Spotify in one
+                dashboard
               </CardDescription>
             </CardHeader>
           </Card>
@@ -97,7 +108,8 @@ export default function Home() {
             Ready to take control of your subscriptions?
           </h2>
           <p className="text-lg mb-8 muted-foreground">
-            Join thousands of users who are already saving money with our subscription tracker.
+            Join thousands of users who are already saving money with our
+            subscription tracker.
           </p>
           <div className="flex gap-4 justify-center mb-8">
             <Badge variant="secondary" className="px-4 py-2">
@@ -113,7 +125,7 @@ export default function Home() {
           <Button
             size="lg"
             className="px-8"
-            onClick={() => handleNavigation("/sign-up", "Getting started...")}
+            onClick={() => handleNavigation('/sign-up', 'Getting started...')}
           >
             Start Tracking Now
           </Button>

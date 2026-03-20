@@ -1,13 +1,13 @@
-"use client"
+'use client';
 
-import React from "react";
-import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
-import Link from "next/link";
-import { useUserData } from "@/hooks/use-user-data";
-import { useAuthLoader } from "@/components/auth-loader-provider";
-import { useRouter } from "next/navigation";
+import React from 'react';
+import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme-toggle';
+import Link from 'next/link';
+import { useUserData } from '@/hooks/use-user-data';
+import { useAuthLoader } from '@/components/auth-loader-provider';
+import { useRouter } from 'next/navigation';
 
 export function Header() {
   const { isSignedIn } = useUser();
@@ -18,7 +18,7 @@ export function Header() {
   // Show/hide loader based on saving state
   React.useEffect(() => {
     if (isSaving) {
-      showLoader("Setting up your account...");
+      showLoader('Setting up your account...');
     } else {
       hideLoader();
     }
@@ -26,7 +26,7 @@ export function Header() {
 
   // Handle navigation with loading state
   const handleNavigation = (href: string) => {
-    showLoader("Loading...");
+    showLoader('Loading...');
     router.push(href);
   };
 
@@ -34,7 +34,10 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Link href="/" className="text-xl font-bold hover:text-primary transition-colors">
+          <Link
+            href="/"
+            className="text-xl font-bold hover:text-primary transition-colors"
+          >
             Subscription Tracker
           </Link>
         </div>
@@ -52,7 +55,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleNavigation("/dashboard")}
+                onClick={() => handleNavigation('/dashboard')}
               >
                 Dashboard
               </Button>
@@ -66,9 +69,7 @@ export function Header() {
                 </Button>
               </SignInButton>
               <SignUpButton>
-                <Button size="sm">
-                  Sign Up
-                </Button>
+                <Button size="sm">Sign Up</Button>
               </SignUpButton>
             </div>
           )}

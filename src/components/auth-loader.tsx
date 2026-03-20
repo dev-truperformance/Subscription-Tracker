@@ -1,13 +1,16 @@
-"use client";
+'use client';
 
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react';
 
 interface AuthLoaderProps {
   isLoading: boolean;
   message?: string;
 }
 
-export function AuthLoader({ isLoading, message = "Setting up your account..." }: AuthLoaderProps) {
+export function AuthLoader({
+  isLoading,
+  message = 'Setting up your account...',
+}: AuthLoaderProps) {
   if (!isLoading) return null;
 
   return (

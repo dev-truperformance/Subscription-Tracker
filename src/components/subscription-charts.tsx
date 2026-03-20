@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import React, { useState, useMemo } from "react"
+import { useMemo } from 'react';
 
 import {
   Bar,
@@ -10,14 +10,9 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-} from "recharts"
+} from 'recharts';
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Subscription {
   id: number;
@@ -35,8 +30,12 @@ interface TeamSubscriptionChartProps {
   onPeriodChange: (period: string) => void;
 }
 
-export function TeamSubscriptionChart({ subscriptions, period, onPeriodChange }: TeamSubscriptionChartProps) {
-  const timePeriods = ["12 months", "30 days", "7 days", "24 hours"]
+export function TeamSubscriptionChart({
+  subscriptions,
+  period,
+  onPeriodChange,
+}: TeamSubscriptionChartProps) {
+  const timePeriods = ['12 months', '30 days', '7 days', '24 hours'];
 
   // Process subscription data to group by functions and sum payments
   const chartData = useMemo(() => {
@@ -45,31 +44,31 @@ export function TeamSubscriptionChart({ subscriptions, period, onPeriodChange }:
     // Filter subscriptions based on period first
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Set to start of day to include today
-    let cutoffDate = new Date();
+    const cutoffDate = new Date();
 
     switch (period) {
-      case "30 days":
+      case '30 days':
         cutoffDate.setDate(now.getDate() + 30);
         break;
-      case "7 days":
+      case '7 days':
         cutoffDate.setDate(now.getDate() + 7);
         break;
-      case "24 hours":
+      case '24 hours':
         cutoffDate.setHours(now.getHours() + 24);
         break;
-      case "12 months":
+      case '12 months':
       default:
         cutoffDate.setFullYear(now.getFullYear() + 1);
         break;
     }
 
-    const filteredSubscriptions = subscriptions.filter(sub => {
+    const filteredSubscriptions = subscriptions.filter((sub) => {
       const subDate = new Date(sub.dueDate);
       subDate.setHours(0, 0, 0, 0); // Set to start of day for comparison
       return subDate <= cutoffDate && subDate >= now;
     });
 
-    filteredSubscriptions.forEach(sub => {
+    filteredSubscriptions.forEach((sub) => {
       const category = sub.functions || 'Other';
       // Extract numeric value from payment string like "USD 20"
       const numberMatch = sub.payment.match(/[\d.,]+/);
@@ -84,7 +83,7 @@ export function TeamSubscriptionChart({ subscriptions, period, onPeriodChange }:
     // Convert to array format for recharts
     return Object.entries(groupedData).map(([name, value]) => ({
       name,
-      value: Math.round(value)
+      value: Math.round(value),
     }));
   }, [subscriptions, period]);
 
@@ -119,16 +118,19 @@ export function TeamSubscriptionChart({ subscriptions, period, onPeriodChange }:
         <CardContent className="bg-card p-6 rounded-xl">
           {/* Filters */}
           <div className="flex justify-between items-center mb-10">
-            <h3 className="text-card-foreground text-lg">Team-wise Subscription Count</h3>
+            <h3 className="text-card-foreground text-lg">
+              Team-wise Subscription Count
+            </h3>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               {timePeriods.map((timePeriod) => (
                 <span
                   key={timePeriod}
                   onClick={() => onPeriodChange(timePeriod)}
-                  className={`cursor-pointer transition-colors duration-200 ${period === timePeriod
-                    ? "text-card-foreground font-medium"
-                    : "text-muted-foreground hover:text-card-foreground"
-                    }`}
+                  className={`cursor-pointer transition-colors duration-200 ${
+                    period === timePeriod
+                      ? 'text-card-foreground font-medium'
+                      : 'text-muted-foreground hover:text-card-foreground'
+                  }`}
                 >
                   {timePeriod}
                 </span>
@@ -147,26 +149,26 @@ export function TeamSubscriptionChart({ subscriptions, period, onPeriodChange }:
               <XAxis
                 dataKey="name"
                 stroke="var(--muted)"
-                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
               />
 
               <YAxis
                 stroke="var(--muted)"
-                tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 tickFormatter={(value) => `$${value}`}
               />
 
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgba(0, 0, 0, 0.8)",
-                  border: "none",
-                  borderRadius: "4px",
-                  color: "#fff",
-                  boxShadow: "none",
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  border: 'none',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  boxShadow: 'none',
                 }}
-                labelStyle={{ color: "#fff" }}
-                itemStyle={{ color: "#fff" }}
-                formatter={(value) => [`$${value}`, "Subscription Cost"]}
+                labelStyle={{ color: '#fff' }}
+                itemStyle={{ color: '#fff' }}
+                formatter={(value) => [`$${value}`, 'Subscription Cost']}
               />
 
               {/* Single Bar */}
@@ -176,7 +178,7 @@ export function TeamSubscriptionChart({ subscriptions, period, onPeriodChange }:
                 radius={[4, 4, 0, 0]}
                 style={{
                   filter: 'brightness(1.1)',
-                  transition: 'filter 0.2s ease'
+                  transition: 'filter 0.2s ease',
                 }}
               />
             </BarChart>
@@ -184,5 +186,5 @@ export function TeamSubscriptionChart({ subscriptions, period, onPeriodChange }:
         </CardContent>
       </Card>
     </>
-  )
+  );
 }

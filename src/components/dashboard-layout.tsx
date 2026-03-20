@@ -1,26 +1,28 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Sidebar } from "@/components/sidebar"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useClerk } from "@clerk/nextjs"
-import { LogOut } from "lucide-react"
-import { useUserData } from "@/hooks/use-user-data"
+import { useEffect } from 'react';
+import { Sidebar } from '@/components/sidebar';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useClerk } from '@clerk/nextjs';
+import { LogOut } from 'lucide-react';
+import { useUserData } from '@/hooks/use-user-data';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   isSidebarCollapsed?: boolean;
-  onSidebarToggle?: () => void;
 }
 
-export function DashboardLayout({ children, isSidebarCollapsed = true, onSidebarToggle }: DashboardLayoutProps) {
+export function DashboardLayout({
+  children,
+  isSidebarCollapsed = true,
+}: DashboardLayoutProps) {
   const { user, isLoaded } = useUserData();
   const { signOut } = useClerk();
 
   useEffect(() => {
-    console.log("Dashboard page loaded");
-    console.log("User data loaded:", isLoaded);
-    console.log("User:", user);
+    console.log('Dashboard page loaded');
+    console.log('User data loaded:', isLoaded);
+    console.log('User:', user);
   }, [user, isLoaded]);
 
   return (
@@ -57,5 +59,5 @@ export function DashboardLayout({ children, isSidebarCollapsed = true, onSidebar
         </div>
       </div>
     </div>
-  )
+  );
 }

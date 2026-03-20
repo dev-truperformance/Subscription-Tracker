@@ -7,7 +7,7 @@ const connectionString = process.env.DATABASE_URL!;
 
 const client = postgres(connectionString, { prepare: false });
 export const db = drizzle(client, {
-  schema: { subscriptions, users }
+  schema: { subscriptions, users },
 });
 
 export type { Subscription, NewSubscription, User, NewUser };

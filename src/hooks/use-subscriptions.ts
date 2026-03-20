@@ -1,26 +1,26 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // Types for subscription data
 export interface Subscription {
-  id: number
-  userId: string
-  name: string
-  email: string
-  functions: string
-  payment: string
-  dueDate: string
-  frequency: string
-  createdAt: string
-  updatedAt: string
+  id: number;
+  userId: string;
+  name: string;
+  email: string;
+  functions: string;
+  payment: string;
+  dueDate: string;
+  frequency: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NewSubscription {
-  name: string
-  email: string
-  functions: string
-  payment: string
-  frequency: string
-  dueDate?: string | null
+  name: string;
+  email: string;
+  functions: string;
+  payment: string;
+  frequency: string;
+  dueDate?: string | null;
 }
 
 // GET subscriptions hook
@@ -28,20 +28,20 @@ export function useSubscriptions() {
   return useQuery({
     queryKey: ['subscriptions'],
     queryFn: async () => {
-      const response = await fetch('/api/subscriptions')
+      const response = await fetch('/api/subscriptions');
       if (!response.ok) {
-        throw new Error('Failed to fetch subscriptions')
+        throw new Error('Failed to fetch subscriptions');
       }
-      const result = await response.json()
-      return result.data as Subscription[]
+      const result = await response.json();
+      return result.data as Subscription[];
     },
     staleTime: 60 * 1000, // 1 minute
-  })
+  });
 }
 
 // POST subscription hook
 export function useCreateSubscription() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (subscriptionData: NewSubscription) => {
@@ -51,19 +51,19 @@ export function useCreateSubscription() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(subscriptionData),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create subscription')
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create subscription');
       }
 
-      const result = await response.json()
-      return result.data as Subscription
+      const result = await response.json();
+      return result.data as Subscription;
     },
     onSuccess: () => {
       // Invalidate and refetch subscriptions
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
     },
-  })
+  });
 }

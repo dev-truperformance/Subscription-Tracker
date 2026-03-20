@@ -10,7 +10,10 @@ export async function POST(req: NextRequest) {
 
     if (!webhookSecret) {
       console.error('CLERK_WEBHOOK_SECRET not found');
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Webhook secret not configured' },
+        { status: 500 }
+      );
     }
 
     const body = await req.text();
@@ -23,13 +26,17 @@ export async function POST(req: NextRequest) {
       evt = JSON.parse(body) as WebhookEvent;
     } catch (err) {
       console.error('Failed to parse webhook body:', err);
-      return NextResponse.json({ error: 'Invalid webhook body' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid webhook body' },
+        { status: 400 }
+      );
     }
 
     const { type } = evt;
 
     if (type === 'user.created') {
-      const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+      const { id, email_addresses, first_name, last_name, image_url } =
+        evt.data;
 
       const userData = {
         clerkId: id,
@@ -40,7 +47,11 @@ export async function POST(req: NextRequest) {
       };
 
       // Check if user already exists
-      const existingUser = await db.select().from(users).where(eq(users.clerkId, id)).limit(1);
+      const existingUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.clerkId, id))
+        .limit(1);
 
       if (existingUser.length === 0) {
         // Create new user
@@ -54,7 +65,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === 'user.updated') {
-      const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+      const { id, email_addresses, first_name, last_name, image_url } =
+        evt.data;
 
       const userData = {
         email: email_addresses[0]?.email_address || '',
@@ -75,9 +87,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ message: 'Webhook received' });
-
   } catch (error) {
     console.error('Webhook error:', error);
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Webhook processing failed' },
+      { status: 500 }
+    );
   }
 }

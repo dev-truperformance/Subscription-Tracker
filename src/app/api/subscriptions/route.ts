@@ -15,7 +15,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user from clerkId
-    const user = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1);
 
     if (user.length === 0) {
       return NextResponse.json({ data: [] });
@@ -49,7 +53,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Get user from clerkId
-    const user = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1);
 
     if (user.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -60,7 +68,10 @@ export async function POST(request: NextRequest) {
       userId: userId,
     };
 
-    const newSubscription = await db.insert(subscriptions).values(subscriptionWithUser).returning();
+    const newSubscription = await db
+      .insert(subscriptions)
+      .values(subscriptionWithUser)
+      .returning();
     return NextResponse.json({ data: newSubscription[0] }, { status: 201 });
   } catch (error) {
     console.error('Database error:', error);

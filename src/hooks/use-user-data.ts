@@ -53,7 +53,9 @@ export function useUserData() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const hasSavedRef = useRef(false);
 
-  const { data: existingUser, isLoading: isCheckingUser } = useUserByClerkId(user?.id || '');
+  const { data: existingUser, isLoading: isCheckingUser } = useUserByClerkId(
+    user?.id || ''
+  );
   const createUser = useCreateUser();
 
   useEffect(() => {
@@ -76,7 +78,10 @@ export function useUserData() {
 
         // Check if user already exists
         if (existingUser) {
-          console.log('✅ User already exists in database:', existingUser.email);
+          console.log(
+            '✅ User already exists in database:',
+            existingUser.email
+          );
           hasSavedRef.current = true; // Mark as processed
           return;
         }
@@ -86,10 +91,11 @@ export function useUserData() {
         console.log('✅ User data saved to database:', userData.email);
         console.log('📊 Saved user data:', result);
         hasSavedRef.current = true; // Mark as successfully saved
-
       } catch (error) {
         console.error('Error saving user data:', error);
-        setSaveError(error instanceof Error ? error.message : 'Failed to save user data');
+        setSaveError(
+          error instanceof Error ? error.message : 'Failed to save user data'
+        );
       }
     };
 

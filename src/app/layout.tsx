@@ -1,26 +1,26 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ClerkProvider } from "@clerk/nextjs";
-import { AuthLoaderProvider } from "@/components/auth-loader-provider";
-import { Toaster } from "sonner";
-import { NavigationLoader } from "@/components/navigation-loader";
-import { QueryProvider } from "@/components/query-provider";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
+import { ThemeProvider } from '@/components/theme-provider';
+import { ClerkProvider } from '@clerk/nextjs';
+import { AuthLoaderProvider } from '@/components/auth-loader-provider';
+import { Toaster } from 'sonner';
+import { NavigationLoader } from '@/components/navigation-loader';
+import { QueryProvider } from '@/components/query-provider';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Subscription Tracker",
-  description: "Track your subscriptions effortlessly",
+  title: 'Subscription Tracker',
+  description: 'Track your subscriptions effortlessly',
 };
 
 export default function RootLayout({

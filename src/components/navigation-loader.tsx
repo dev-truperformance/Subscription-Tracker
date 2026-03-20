@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useAuthLoader } from "./auth-loader-provider";
+import { useEffect } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useAuthLoader } from './auth-loader-provider';
 
 export function NavigationLoader() {
   const pathname = usePathname();
@@ -12,7 +12,7 @@ export function NavigationLoader() {
   useEffect(() => {
     // Show loader when route starts changing
     const handleRouteChangeStart = () => {
-      showLoader("Loading...");
+      showLoader('Loading...');
     };
 
     // Hide loader when route change completes
@@ -24,17 +24,17 @@ export function NavigationLoader() {
     };
 
     // Listen for route changes
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       // Custom event listeners for Next.js App Router
-      window.addEventListener("beforeunload", handleRouteChangeStart);
-      
+      window.addEventListener('beforeunload', handleRouteChangeStart);
+
       // Show loader when pathname or search params change
       handleRouteChangeComplete();
     }
 
     return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("beforeunload", handleRouteChangeStart);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('beforeunload', handleRouteChangeStart);
       }
     };
   }, [pathname, searchParams, showLoader, hideLoader]);
