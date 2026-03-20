@@ -28,7 +28,7 @@ export function DashboardLayout({
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <Sidebar isCollapsed={isSidebarCollapsed} />
+      {/* <Sidebar isCollapsed={isSidebarCollapsed} /> */}
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
