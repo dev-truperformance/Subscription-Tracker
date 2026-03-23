@@ -1,13 +1,14 @@
 'use client';
 
-import * as React from 'react';
-import { useState } from 'react';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { toast } from 'sonner';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -15,15 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { useCreateSubscription } from '@/hooks/use-subscriptions';
+import { useFormik } from 'formik';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import * as React from 'react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import * as Yup from 'yup';
 
 // Yup validation schema
 const subscriptionSchema = Yup.object().shape({
@@ -166,7 +166,7 @@ export function SubscriptionForm({ onSuccess }: SubscriptionFormProps) {
           functions: values.functions,
           payment: `${currency} ${values.payment}`,
           frequency: values.frequency,
-          dueDate: dueDate ? dueDate.toISOString().split('T')[0] : null,
+          dueDate: dueDate ? dueDate.toISOString() : null,
         };
 
         console.log('Submitting subscription data:', subscriptionData);

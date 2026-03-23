@@ -1,1 +1,0 @@
-ALTER TABLE "subscriptions" ADD COLUMN "user_id" text NOT NULL;

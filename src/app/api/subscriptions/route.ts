@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db, Subscription, NewSubscription } from '@/lib/db';
+import { db } from '@/lib/db';
 import { subscriptions } from '@/lib/db/schema';
 import { users } from '@/lib/db/user-schema';
-import { eq, and } from 'drizzle-orm';
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
     const subscriptionWithUser = {
       ...body,
       userId: userId,
+      dueDate: body.dueDate ? new Date(body.dueDate) : null,
     };
 
     const newSubscription = await db

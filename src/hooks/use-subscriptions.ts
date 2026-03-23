@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Types for subscription data
 export interface Subscription {
@@ -10,6 +10,9 @@ export interface Subscription {
   payment: string;
   dueDate: string;
   frequency: string;
+  reminderHistory?: string[];
+  lastReminderAt?: string;
+  status?: string;
   createdAt: string;
   updatedAt: string;
 }
