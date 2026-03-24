@@ -10,14 +10,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Header } from '@/components/header';
 import { useRouter } from 'next/navigation';
-import { useAuthLoader } from '@/components/auth-loader-provider';
+import { useUser } from '@clerk/nextjs';
 
 export default function Home() {
   const router = useRouter();
-  const { showLoader } = useAuthLoader();
+  const { isSignedIn } = useUser();
 
-  const handleNavigation = (href: string, message: string = 'Loading...') => {
-    showLoader(message);
+  const handleNavigation = (href: string) => {
     router.push(href);
   };
 
@@ -42,25 +41,33 @@ export default function Home() {
             subscriptions in one place and never miss a payment again.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button
-              size="lg"
-              className="px-8"
-              onClick={() =>
-                handleNavigation('/sign-up', 'Creating your account...')
-              }
-            >
-              Get Started
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="px-8"
-              onClick={() =>
-                handleNavigation('/dashboard', 'Loading dashboard...')
-              }
-            >
-              View Demo
-            </Button>
+            {!isSignedIn ? (
+              <>
+                <Button
+                  size="lg"
+                  className="px-8"
+                  onClick={() => handleNavigation('/sign-up')}
+                >
+                  Get Started
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="px-8"
+                  onClick={() => handleNavigation('/sign-in')}
+                >
+                  Sign In
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="lg"
+                className="px-8"
+                onClick={() => handleNavigation('/organization')}
+              >
+                Go to Dashboard
+              </Button>
+            )}
           </div>
         </div>
 
@@ -125,7 +132,7 @@ export default function Home() {
           <Button
             size="lg"
             className="px-8"
-            onClick={() => handleNavigation('/sign-up', 'Getting started...')}
+            onClick={() => handleNavigation('/sign-up')}
           >
             Start Tracking Now
           </Button>

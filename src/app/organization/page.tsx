@@ -16,7 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 
 export default function OrganizationPage() {
@@ -25,13 +25,15 @@ export default function OrganizationPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const { isSignedIn, user } = useUser();
+  const syncAttempted = useRef(false);
 
   // Sync user to database when they land on organization page
   useEffect(() => {
-    if (isSignedIn && user) {
+    if (isSignedIn && user?.id && !syncAttempted.current) {
+      syncAttempted.current = true;
       syncUserToDatabase();
     }
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user?.id]);
 
   const syncUserToDatabase = async () => {
     try {

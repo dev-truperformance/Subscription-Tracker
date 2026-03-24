@@ -25,7 +25,7 @@ interface Organization {
   id: string;
   name: string;
   type: 'enterprise' | 'industry' | 'personal';
-  visibility: 'public' | 'private';
+  isPublic: boolean;
   memberCount: number | null;
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -45,7 +45,7 @@ export function OrganizationSelector() {
   const [formData, setFormData] = useState({
     name: '',
     type: '' as 'enterprise' | 'industry' | 'personal' | '',
-    visibility: 'public' as 'public' | 'private',
+    isPublic: true,
   });
 
   // Redirect to dashboard if user has organizations
@@ -70,10 +70,11 @@ export function OrganizationSelector() {
       // Then save additional metadata to database
       await createOrganizationMutation.mutateAsync({
         id: clerkOrg.id,
+        clerkOrganizationId: clerkOrg.id,
         name: formData.name,
+        slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
         type: formData.type,
-        visibility: formData.visibility,
-        createdBy: user?.id || '',
+        isPublic: formData.isPublic,
       });
 
       toast.success('Organization created successfully!');
@@ -237,12 +238,12 @@ export function OrganizationSelector() {
                 <div>
                   <Label htmlFor="visibility">Visibility</Label>
                   <Select
-                    value={formData.visibility}
+                    value={formData.isPublic ? 'public' : 'private'}
                     onValueChange={(value) =>
                       value &&
                       setFormData((prev) => ({
                         ...prev,
-                        visibility: value as 'public' | 'private',
+                        isPublic: value === 'public',
                       }))
                     }
                   >
