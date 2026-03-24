@@ -8,16 +8,26 @@ import { NextRequest, NextResponse } from 'next/server';
 // GET /api/organizations/[organizationId]/members - Get organization members
 export async function GET(
   request: NextRequest,
-  { params }: { params: { organizationId: string } }
+  { params }: { params: Promise<{ organizationId: string }> }
 ) {
   try {
     const { userId } = await auth();
+    const { organizationId } = await params;
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organizationId } = params;
+    // Get user's internal UUID from Clerk ID
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1);
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     // Check if user is a member of the organization
     const membership = await db
@@ -26,7 +36,7 @@ export async function GET(
       .where(
         and(
           eq(organizationMembers.organizationId, organizationId),
-          eq(organizationMembers.userId, userId)
+          eq(organizationMembers.userId, user.id)
         )
       )
       .limit(1);
@@ -52,12 +62,10 @@ export async function GET(
     // Transform to match expected interface
     const transformedMembers = members.map((member) => ({
       id: member.id,
-      name:
-        member.firstName && member.lastName
-          ? `${member.firstName} ${member.lastName}`
-          : member.firstName || member.email || 'Unknown User',
-      email: member.email || 'unknown@example.com',
-      role: member.role === 'admin' ? 'org:admin' : 'member',
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      role: member.role, // Keep original role from database
       joinedAt: member.joinedAt?.toISOString() || new Date().toISOString(),
     }));
 

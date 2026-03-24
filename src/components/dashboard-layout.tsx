@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
-import { Sidebar } from '@/components/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { useClerk } from '@clerk/nextjs';
-import { LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useUserData } from '@/hooks/use-user-data';
+import { useClerk } from '@clerk/nextjs';
+import { Building2, LogOut } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect } from 'react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -42,6 +43,16 @@ export function DashboardLayout({
                 className="w-[261.386px] h-[60.359px]"
               />
               <div className="flex items-center gap-2">
+                <Link href="/my-organization">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Building2 size={16} />
+                    Organization
+                  </Button>
+                </Link>
                 <ThemeToggle />
                 <button
                   onClick={() => signOut({ redirectUrl: '/' })}

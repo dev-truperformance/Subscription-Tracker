@@ -1,15 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Organization, NewOrganization } from '@/lib/db/organization-schema';
+import { NewOrganization } from '@/lib/db/organization-schema';
+import { Organization as OrgType } from '@/types/organization';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Mock API functions - replace with actual API calls
-const fetchOrganizations = async (): Promise<Organization[]> => {
-  // TODO: Replace with actual API call
-  return [];
+const fetchOrganizations = async (): Promise<OrgType[]> => {
+  const response = await fetch('/api/organizations');
+  if (!response.ok) {
+    throw new Error('Failed to fetch organizations');
+  }
+  const result = await response.json();
+  return result.organizations as OrgType[];
 };
 
 const createOrganization = async (
   orgData: NewOrganization
-): Promise<Organization> => {
+): Promise<OrgType> => {
   // TODO: Replace with actual API call
   const response = await fetch('/api/organizations', {
     method: 'POST',
@@ -25,7 +30,7 @@ const createOrganization = async (
   }
 
   const result = await response.json();
-  return result.data as Organization;
+  return result.data as OrgType;
 };
 
 const joinOrganization = async (organizationId: string): Promise<void> => {

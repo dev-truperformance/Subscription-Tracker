@@ -1,30 +1,13 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Search, Upload, ArrowUpDown, FileText, FileSpreadsheet, File } from "lucide-react"
-import { useSubscriptions, Subscription as SubscriptionType } from "@/hooks/use-subscriptions"
-import * as XLSX from "xlsx"
-import { saveAs } from "file-saver"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
-import { Document, Packer, Paragraph } from "docx"
+import { Badge } from '@/components/ui/badge';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Pagination,
   PaginationContent,
@@ -32,15 +15,64 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useIsAdmin } from '@/hooks/use-is-admin';
+import {
+  Subscription as SubscriptionType,
+  useDeleteSubscription,
+  useSubscriptions,
+  useUpdateSubscription,
+} from '@/hooks/use-subscriptions';
+import { Document, Packer, Paragraph } from 'docx';
+import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import {
+  ArrowUpDown,
+  File,
+  FileSpreadsheet,
+  FileText,
+  MoreHorizontal,
+  Search,
+  Upload,
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+import { DeleteSubscriptionModal } from './delete-subscription-modal';
+import { UpdateSubscriptionModal } from './update-subscription-modal';
 
-type Frequency = "Monthly" | "Yearly" | "Weekly";
+// Date formatting function
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch (error) {
+    return dateString;
+  }
+};
+
+type Frequency = 'Monthly' | 'Yearly' | 'Weekly';
 
 interface Subscription {
   id: number;
@@ -52,45 +84,58 @@ interface Subscription {
   frequency: Frequency;
 }
 
-const PERIOD_OPTIONS = ["12 months", "30 days", "7 days", "24 hours"];
+const PERIOD_OPTIONS = ['12 months', '30 days', '7 days', '24 hours'];
 
 interface SubscriptionTrackerProps {
   period: string;
   onPeriodChange: (period: string) => void;
 }
 
-export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrackerProps) {
-  const [search, setSearch] = useState("");
+export function SubscriptionTracker({
+  period,
+  onPeriodChange,
+}: SubscriptionTrackerProps) {
+  const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<keyof SubscriptionType | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const { data: subscriptions = [], isLoading, error } = useSubscriptions();
+  const updateSubscription = useUpdateSubscription();
+  const deleteSubscription = useDeleteSubscription();
+  const { data: adminStatus } = useIsAdmin();
+  const isAdmin = adminStatus?.isAdmin || false;
+
+  // Modal states
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] =
+    useState<SubscriptionType | null>(null);
 
   // Filter subscriptions based on selected period
   const getFilteredSubscriptions = () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Set to start of day to include today
-    let cutoffDate = new Date();
+    const cutoffDate = new Date();
 
     switch (period) {
-      case "30 days":
+      case '30 days':
         cutoffDate.setDate(now.getDate() + 30);
         break;
-      case "7 days":
+      case '7 days':
         cutoffDate.setDate(now.getDate() + 7);
         break;
-      case "24 hours":
+      case '24 hours':
         cutoffDate.setHours(now.getHours() + 24);
         break;
-      case "12 months":
+      case '12 months':
       default:
         cutoffDate.setFullYear(now.getFullYear() + 1);
         break;
     }
 
-    return subscriptions.filter(sub => {
+    return subscriptions.filter((sub) => {
       const subDate = new Date(sub.dueDate);
       subDate.setHours(0, 0, 0, 0);
       return subDate <= cutoffDate && subDate >= now;
@@ -131,36 +176,52 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
   }, 0);
 
   const filtered = filteredSubscriptions
-    .filter((s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.functions.toLowerCase().includes(search.toLowerCase()) ||
-      s.email.toLowerCase().includes(search.toLowerCase())
+    .filter(
+      (s) =>
+        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        s.functions.toLowerCase().includes(search.toLowerCase()) ||
+        s.email.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
       if (!sortKey) return 0;
       const aVal = a[sortKey];
       const bVal = b[sortKey];
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortDirection === 'asc'
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
       }
       return 0;
     });
 
   const handleSort = (key: keyof SubscriptionType) => {
-    if (sortKey === key) setSortDirection((p) => p === "asc" ? "desc" : "asc");
-    else { setSortKey(key); setSortDirection("asc"); }
+    if (sortKey === key)
+      setSortDirection((p) => (p === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
   };
 
-  const SortButton = ({ label, field }: { label: string; field: keyof SubscriptionType }) => (
+  const SortButton = ({
+    label,
+    field,
+  }: {
+    label: string;
+    field: keyof SubscriptionType;
+  }) => (
     <button
       onClick={() => handleSort(field)}
       className="flex items-center gap-1 text-neutral-400 hover:text-white transition-colors"
     >
       {label}
-      <ArrowUpDown size={13} className={sortKey === field ? "text-orange-400" : "text-neutral-600"} />
+      <ArrowUpDown
+        size={13}
+        className={sortKey === field ? 'text-orange-400' : 'text-neutral-600'}
+      />
     </button>
   );
 
@@ -169,7 +230,7 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
   const paginatedData = filtered.slice(startIndex, startIndex + itemsPerPage);
 
   const getExportData = () => {
-    return paginatedData.map(sub => {
+    return paginatedData.map((sub) => {
       const paymentValue = sub.payment;
       return {
         Name: sub.name,
@@ -177,7 +238,7 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
         Functions: sub.functions,
         Payment: paymentValue,
         DueDate: sub.dueDate,
-        Frequency: sub.frequency
+        Frequency: sub.frequency,
       };
     });
   };
@@ -186,46 +247,116 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
     const data = getExportData();
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Subscriptions");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    saveAs(blob, "subscriptions.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Subscriptions');
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    saveAs(blob, 'subscriptions.xlsx');
   };
 
   const downloadPDF = () => {
     const data = getExportData();
     const doc = new jsPDF();
     autoTable(doc, {
-      head: [["Name", "Email", "Functions", "Payment", "Due Date", "Frequency"]],
-      body: data.map(sub => [sub.Name, sub.Email, sub.Functions, sub.Payment, sub.DueDate, sub.Frequency])
+      head: [
+        ['Name', 'Email', 'Functions', 'Payment', 'Due Date', 'Frequency'],
+      ],
+      body: data.map((sub) => [
+        sub.Name,
+        sub.Email,
+        sub.Functions,
+        sub.Payment,
+        sub.DueDate,
+        sub.Frequency,
+      ]),
     });
-    doc.save("subscriptions.pdf");
+    doc.save('subscriptions.pdf');
   };
 
   const downloadDoc = async () => {
     const data = getExportData();
     const doc = new Document({
-      sections: [{
-        children: [
-          new Paragraph("Subscription Report"),
-          ...data.map(sub => new Paragraph(`${sub.Name} - ${sub.Functions} - ${sub.Payment} - ${sub.Frequency}`))
-        ]
-      }]
+      sections: [
+        {
+          children: [
+            new Paragraph('Subscription Report'),
+            ...data.map(
+              (sub) =>
+                new Paragraph(
+                  `${sub.Name} - ${sub.Functions} - ${sub.Payment} - ${sub.Frequency}`
+                )
+            ),
+          ],
+        },
+      ],
     });
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, "subscriptions.docx");
+    saveAs(blob, 'subscriptions.docx');
   };
 
   const downloadText = () => {
     const data = getExportData();
-    const content = data.map(sub => `${sub.Name} - ${sub.Functions} - ${sub.Payment} - ${sub.Frequency}`).join('\n');
-    const blob = new Blob([content], { type: "text/plain" });
+    const content = data
+      .map(
+        (sub) =>
+          `${sub.Name} - ${sub.Functions} - ${sub.Payment} - ${sub.Frequency}`
+      )
+      .join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = "subscriptions.txt";
+    a.download = 'subscriptions.txt';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // Handlers for update and delete
+  const handleUpdateClick = (subscription: SubscriptionType) => {
+    setSelectedSubscription(subscription);
+    setUpdateModalOpen(true);
+  };
+
+  const handleDeleteClick = (subscription: SubscriptionType) => {
+    setSelectedSubscription(subscription);
+    setDeleteModalOpen(true);
+  };
+
+  const handleUpdateSubscription = (data: any) => {
+    if (selectedSubscription) {
+      updateSubscription.mutate(
+        { id: selectedSubscription.id, data },
+        {
+          onSuccess: () => {
+            toast.success('Subscription updated successfully!');
+            setUpdateModalOpen(false);
+            setSelectedSubscription(null);
+          },
+          onError: (error: any) => {
+            toast.error(error.message || 'Failed to update subscription');
+          },
+        }
+      );
+    }
+  };
+
+  const handleDeleteSubscription = () => {
+    if (selectedSubscription) {
+      deleteSubscription.mutate(selectedSubscription.id, {
+        onSuccess: () => {
+          toast.success('Subscription deleted successfully!');
+          setDeleteModalOpen(false);
+          setSelectedSubscription(null);
+        },
+        onError: (error: any) => {
+          toast.error(error.message || 'Failed to delete subscription');
+        },
+      });
+    }
   };
 
   return (
@@ -233,7 +364,6 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');`}</style>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
-
         <div className="flex h-9 rounded-lg border bg-background overflow-hidden">
           <span className="flex items-center px-3 text-sm text-muted-foreground whitespace-nowrap leading-none">
             Upcoming Due Dates:
@@ -242,12 +372,12 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
           <Select value={period} onValueChange={(v) => v && onPeriodChange(v)}>
             <SelectTrigger
               style={{
-                height: "100%",
-                minHeight: "unset",
-                border: "none",
-                outline: "none",
-                boxShadow: "none",
-                background: "transparent",
+                height: '100%',
+                minHeight: 'unset',
+                border: 'none',
+                outline: 'none',
+                boxShadow: 'none',
+                background: 'transparent',
                 borderRadius: 0,
               }}
               className="text-primary font-medium px-3 text-sm focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 [&>svg]:text-primary"
@@ -256,7 +386,11 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
             </SelectTrigger>
             <SelectContent className="bg-popover border-popover text-popover-foreground">
               {PERIOD_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt} className="focus:bg-accent focus:text-accent-foreground">
+                <SelectItem
+                  key={opt}
+                  value={opt}
+                  className="focus:bg-accent focus:text-accent-foreground"
+                >
                   {opt}
                 </SelectItem>
               ))}
@@ -274,10 +408,16 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
         </div>
 
         <div className="relative flex-1 min-w-[220px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
           <Input
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search Your Subscription"
             className="pl-9 bg-background border text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-lg h-9"
           />
@@ -288,19 +428,31 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
             <Upload size={16} />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-popover border-popover text-popover-foreground">
-            <DropdownMenuItem className="hover:bg-accent focus:bg-accent cursor-pointer" onClick={downloadPDF}>
+            <DropdownMenuItem
+              className="hover:bg-accent focus:bg-accent cursor-pointer"
+              onClick={downloadPDF}
+            >
               <FileText className="mr-2 h-4 w-4" />
               <span>PDF</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-accent focus:bg-accent cursor-pointer" onClick={downloadExcel}>
+            <DropdownMenuItem
+              className="hover:bg-accent focus:bg-accent cursor-pointer"
+              onClick={downloadExcel}
+            >
               <FileSpreadsheet className="mr-2 h-4 w-4" />
               <span>Excel</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-accent focus:bg-accent cursor-pointer" onClick={downloadDoc}>
+            <DropdownMenuItem
+              className="hover:bg-accent focus:bg-accent cursor-pointer"
+              onClick={downloadDoc}
+            >
               <File className="mr-2 h-4 w-4" />
               <span>Google Sheet</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-accent focus:bg-accent cursor-pointer" onClick={downloadText}>
+            <DropdownMenuItem
+              className="hover:bg-accent focus:bg-accent cursor-pointer"
+              onClick={downloadText}
+            >
               <File className="mr-2 h-4 w-4" />
               <span>Text File</span>
             </DropdownMenuItem>
@@ -315,16 +467,26 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
               <TableHead className="text-muted-foreground font-medium py-3 pl-4 w-[280px]">
                 <SortButton label="Subscription Name" field="name" />
               </TableHead>
-              <TableHead className="text-muted-foreground font-medium py-3">Functions</TableHead>
-              <TableHead className="text-muted-foreground font-medium py-3">
+              <TableHead className="text-muted-foreground font-medium py-3 w-[150px]">
+                Owner
+              </TableHead>
+              <TableHead className="text-muted-foreground font-medium py-3 w-[120px]">
+                <SortButton label="Functions" field="functions" />
+              </TableHead>
+              <TableHead className="text-muted-foreground font-medium py-3 w-[100px]">
                 <SortButton label="Payment" field="payment" />
               </TableHead>
-              <TableHead className="text-muted-foreground font-medium py-3">
+              <TableHead className="text-muted-foreground font-medium py-3 w-[100px]">
                 <SortButton label="Due Date" field="dueDate" />
               </TableHead>
-              <TableHead className="text-muted-foreground font-medium py-3">
+              <TableHead className="text-muted-foreground font-medium py-3 w-[100px]">
                 <SortButton label="Frequency" field="frequency" />
               </TableHead>
+              {isAdmin && (
+                <TableHead className="text-muted-foreground font-medium py-3 w-[80px]">
+                  Actions
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -336,19 +498,45 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
                 <TableCell className="py-4 pl-4">
                   <div className="flex items-center gap-3">
                     <div>
-                      <p className="text-foreground font-medium text-sm leading-tight">{sub.name}</p>
-                      <p className="text-muted-foreground text-xs">{sub.email}</p>
+                      <p className="text-foreground font-medium text-sm leading-tight">
+                        {sub.name}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {sub.email}
+                      </p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className="py-4">
-                  <span className="text-foreground text-sm">{sub.functions}</span>
+                  {sub.user ? (
+                    <div>
+                      <p className="text-foreground text-sm">
+                        {sub.user.firstName && sub.user.lastName
+                          ? `${sub.user.firstName} ${sub.user.lastName}`
+                          : sub.user.email.split('@')[0]}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {sub.user.email}
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">You</span>
+                  )}
                 </TableCell>
                 <TableCell className="py-4">
-                  <span className="text-foreground text-sm font-medium">{sub.payment}</span>
+                  <span className="text-foreground text-sm">
+                    {sub.functions}
+                  </span>
                 </TableCell>
                 <TableCell className="py-4">
-                  <span className="text-foreground text-sm">{sub.dueDate}</span>
+                  <span className="text-foreground text-sm font-medium">
+                    {sub.payment}
+                  </span>
+                </TableCell>
+                <TableCell className="py-4">
+                  <span className="text-foreground text-sm">
+                    {formatDate(sub.dueDate)}
+                  </span>
                 </TableCell>
                 <TableCell className="py-4">
                   <Badge
@@ -358,12 +546,37 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
                     {sub.frequency}
                   </Badge>
                 </TableCell>
+                {isAdmin && (
+                  <TableCell className="py-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleUpdateClick(sub)}
+                        >
+                          Update
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteClick(sub)}
+                          className="text-destructive"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
 
             {paginatedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
+                <TableCell
+                  colSpan={isAdmin ? 7 : 6}
+                  className="text-center text-muted-foreground py-12"
+                >
                   No subscriptions match your search.
                 </TableCell>
               </TableRow>
@@ -379,24 +592,36 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className={currentPage === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  className={
+                    currentPage === 1
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'cursor-pointer'
+                  }
                 />
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className={currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  className={
+                    currentPage === totalPages
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'cursor-pointer'
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -407,6 +632,30 @@ export function SubscriptionTracker({ period, onPeriodChange }: SubscriptionTrac
       <p className="text-muted-foreground text-xs mt-3 text-right">
         {paginatedData.length} of {filtered.length} subscriptions
       </p>
+
+      {/* Update Subscription Modal */}
+      <UpdateSubscriptionModal
+        subscription={selectedSubscription}
+        isOpen={updateModalOpen}
+        onClose={() => {
+          setUpdateModalOpen(false);
+          setSelectedSubscription(null);
+        }}
+        onUpdate={handleUpdateSubscription}
+        isLoading={updateSubscription.isPending}
+      />
+
+      {/* Delete Subscription Modal */}
+      <DeleteSubscriptionModal
+        subscription={selectedSubscription}
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedSubscription(null);
+        }}
+        onDelete={handleDeleteSubscription}
+        isLoading={deleteSubscription.isPending}
+      />
     </div>
   );
 }

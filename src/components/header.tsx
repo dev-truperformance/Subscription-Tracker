@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
-import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/theme-toggle';
-import Link from 'next/link';
-import { useUserData } from '@/hooks/use-user-data';
 import { useAuthLoader } from '@/components/auth-loader-provider';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { Button } from '@/components/ui/button';
+import { useUserData } from '@/hooks/use-user-data';
+import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import React from 'react';
 
 export function Header() {
   const { isSignedIn } = useUser();
@@ -43,11 +43,6 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-4 mr-5">
-          {saveError && (
-            <div className="text-xs text-red-500 max-w-xs truncate">
-              {saveError}
-            </div>
-          )}
           <ThemeToggle />
 
           {isSignedIn ? (

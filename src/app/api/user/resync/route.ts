@@ -1,10 +1,10 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/user-schema';
-import { auth, clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { NextRequest, NextResponse } from 'next/server';
 
-// POST /api/user/sync - Sync user to database
+// POST /api/user/resync - Force resync user data from Clerk
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -52,9 +52,21 @@ export async function POST(request: NextRequest) {
         .where(eq(users.clerkId, userId));
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      userData: {
+        clerkId: userId,
+        email: clerkUser.primaryEmailAddress?.emailAddress,
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        fullName: clerkUser.fullName,
+      },
+    });
   } catch (error) {
-    console.error('Error syncing user:', error);
-    return NextResponse.json({ error: 'Failed to sync user' }, { status: 500 });
+    console.error('Error resyncing user:', error);
+    return NextResponse.json(
+      { error: 'Failed to resync user' },
+      { status: 500 }
+    );
   }
 }

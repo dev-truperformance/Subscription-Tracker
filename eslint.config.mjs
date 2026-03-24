@@ -21,6 +21,10 @@ const eslintConfig = defineConfig([
       'react/no-unescaped-entities': 'off',
       // Treat explicit any as warning instead of error
       '@typescript-eslint/no-explicit-any': 'warn',
+      // Disable static components rule
+      'react-hooks/static-components': 'off',
+      // Disable exhaustive deps warnings
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
 ]);

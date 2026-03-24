@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 
 // GET user by clerkId hook
 export function useUserByClerkId(clerkId: string) {
@@ -82,6 +82,23 @@ export function useUserData() {
             '✅ User already exists in database:',
             existingUser.email
           );
+
+          // Check if user data needs updating
+          const needsUpdate =
+            existingUser.email !== userData.email ||
+            existingUser.firstName !== userData.firstName ||
+            existingUser.lastName !== userData.lastName ||
+            existingUser.avatar !== userData.avatar;
+
+          if (needsUpdate) {
+            console.log('🔄 Updating user data with latest Clerk info...');
+            const result = await createUser.mutateAsync(userData);
+            console.log('✅ User data updated in database:', userData.email);
+            console.log('📊 Updated user data:', result);
+          } else {
+            console.log('✅ User data is already up to date');
+          }
+
           hasSavedRef.current = true; // Mark as processed
           return;
         }

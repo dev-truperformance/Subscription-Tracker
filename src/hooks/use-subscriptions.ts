@@ -15,6 +15,12 @@ export interface Subscription {
   status?: string;
   createdAt: string;
   updatedAt: string;
+  // Optional user details for organization subscriptions
+  user?: {
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+  };
 }
 
 export interface NewSubscription {
@@ -63,6 +69,65 @@ export function useCreateSubscription() {
 
       const result = await response.json();
       return result.data as Subscription;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch subscriptions
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+    },
+  });
+}
+
+// PUT subscription hook
+export function useUpdateSubscription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<NewSubscription>;
+    }) => {
+      const response = await fetch(`/api/subscriptions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update subscription');
+      }
+
+      const result = await response.json();
+      return result.data as Subscription;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch subscriptions
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+    },
+  });
+}
+
+// DELETE subscription hook
+export function useDeleteSubscription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/subscriptions/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete subscription');
+      }
+
+      return id;
     },
     onSuccess: () => {
       // Invalidate and refetch subscriptions

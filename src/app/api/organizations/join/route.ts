@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import {
-  organizations,
   organizationMembers,
+  organizations,
 } from '@/lib/db/organization-schema';
+import { users } from '@/lib/db/user-schema';
+import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
+import { NextRequest, NextResponse } from 'next/server';
 
 // POST /api/organizations/join - Join an organization
 export async function POST(request: NextRequest) {
@@ -40,11 +41,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get user's internal UUID from Clerk ID
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1);
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Check if user is already a member
     const [existingMembership] = await db
       .select()
       .from(organizationMembers)
-      .where(eq(organizationMembers.userId, userId))
+      .where(eq(organizationMembers.userId, user.id))
       .limit(1);
 
     if (existingMembership) {
@@ -58,23 +70,18 @@ export async function POST(request: NextRequest) {
     // Add user as a member
     await db.insert(organizationMembers).values({
       organizationId,
-      userId,
+      userId: user.id, // Use internal UUID
+      clerkMembershipId: `cm_${userId}_${organizationId}`, // Generate unique membership ID
       role: 'member', // Default role for new members
     });
 
-    // Update member count
-    await db
-      .update(organizations)
-      .set({
-        memberCount: (org.memberCount || 0) + 1,
-        updatedAt: new Date(),
-      })
-      .where(eq(organizations.id, organizationId));
-
     return NextResponse.json({
-      success: true,
       message: 'Successfully joined organization',
-      isOwner: false, // User is joining, not the owner
+      organization: {
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+      },
     });
   } catch (error) {
     console.error('Error joining organization:', error);
