@@ -39,7 +39,15 @@ export function useSubscriptions() {
     queryFn: async () => {
       const response = await fetch('/api/subscriptions');
       if (!response.ok) {
-        throw new Error('Failed to fetch subscriptions');
+        if (response.status === 401) {
+          throw new Error('Please sign in to view subscriptions');
+        } else if (response.status === 403) {
+          throw new Error(
+            'Access denied - you can only view your own subscriptions'
+          );
+        } else {
+          throw new Error('Failed to fetch subscriptions');
+        }
       }
       const result = await response.json();
       return result.data as Subscription[];
@@ -63,8 +71,16 @@ export function useCreateSubscription() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create subscription');
+        if (response.status === 401) {
+          throw new Error('Please sign in to create subscriptions');
+        } else if (response.status === 403) {
+          throw new Error(
+            'Access denied - you can only create subscriptions for yourself'
+          );
+        } else {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to create subscription');
+        }
       }
 
       const result = await response.json();
@@ -98,8 +114,18 @@ export function useUpdateSubscription() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update subscription');
+        if (response.status === 401) {
+          throw new Error('Please sign in to update subscriptions');
+        } else if (response.status === 403) {
+          throw new Error(
+            'Access denied - you can only update your own subscriptions'
+          );
+        } else if (response.status === 404) {
+          throw new Error('Subscription not found');
+        } else {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update subscription');
+        }
       }
 
       const result = await response.json();
@@ -123,8 +149,18 @@ export function useDeleteSubscription() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete subscription');
+        if (response.status === 401) {
+          throw new Error('Please sign in to delete subscriptions');
+        } else if (response.status === 403) {
+          throw new Error(
+            'Access denied - you can only delete your own subscriptions'
+          );
+        } else if (response.status === 404) {
+          throw new Error('Subscription not found');
+        } else {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to delete subscription');
+        }
       }
 
       return id;

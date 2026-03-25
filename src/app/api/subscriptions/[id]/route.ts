@@ -41,6 +41,28 @@ export async function PUT(
       subscriptionData.dueDate = new Date(subscriptionData.dueDate);
     }
 
+    // Check if subscription exists and belongs to user
+    const existingSubscription = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.id, parseInt(id)))
+      .limit(1);
+
+    if (existingSubscription.length === 0) {
+      return NextResponse.json(
+        { error: 'Subscription not found' },
+        { status: 404 }
+      );
+    }
+
+    // RLS: User can only update their own subscriptions
+    if (existingSubscription[0].userId !== userId) {
+      return NextResponse.json(
+        { error: 'Access denied - you can only update your own subscriptions' },
+        { status: 403 }
+      );
+    }
+
     // Update the subscription
     const updatedSubscription = await db
       .update(subscriptions)
@@ -99,6 +121,28 @@ export async function DELETE(
 
     if (user.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if subscription exists and belongs to user
+    const existingSubscription = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.id, parseInt(id)))
+      .limit(1);
+
+    if (existingSubscription.length === 0) {
+      return NextResponse.json(
+        { error: 'Subscription not found' },
+        { status: 404 }
+      );
+    }
+
+    // RLS: User can only delete their own subscriptions
+    if (existingSubscription[0].userId !== userId) {
+      return NextResponse.json(
+        { error: 'Access denied - you can only delete your own subscriptions' },
+        { status: 403 }
+      );
     }
 
     // Delete the subscription

@@ -38,6 +38,7 @@ import {
   useSubscriptions,
   useUpdateSubscription,
 } from '@/hooks/use-subscriptions';
+import { getRLSErrorMessage } from '@/lib/rls-utils';
 import { Document, Packer, Paragraph } from 'docx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
@@ -51,6 +52,7 @@ import {
   Search,
   Upload,
 } from 'lucide-react';
+import { useEffect } from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -106,6 +108,14 @@ export function SubscriptionTracker({
   const deleteSubscription = useDeleteSubscription();
   const { data: adminStatus } = useIsAdmin();
   const isAdmin = adminStatus?.isAdmin || false;
+
+  // Handle RLS errors with user-friendly messages
+  useEffect(() => {
+    if (error) {
+      const userMessage = getRLSErrorMessage(error);
+      toast.error(userMessage);
+    }
+  }, [error]);
 
   // Modal states
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
@@ -337,7 +347,8 @@ export function SubscriptionTracker({
             setSelectedSubscription(null);
           },
           onError: (error: any) => {
-            toast.error(error.message || 'Failed to update subscription');
+            const userMessage = getRLSErrorMessage(error);
+            toast.error(userMessage);
           },
         }
       );
@@ -353,7 +364,8 @@ export function SubscriptionTracker({
           setSelectedSubscription(null);
         },
         onError: (error: any) => {
-          toast.error(error.message || 'Failed to delete subscription');
+          const userMessage = getRLSErrorMessage(error);
+          toast.error(userMessage);
         },
       });
     }
