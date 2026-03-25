@@ -40,6 +40,7 @@ export default function SignInPage() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <SignIn
         signUpUrl="/sign-up"
+        forceRedirectUrl="/organization"
         appearance={{
           elements: {
             rootBox: 'mx-auto',

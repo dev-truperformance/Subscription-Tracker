@@ -32,6 +32,8 @@ export default function RootLayout({
       afterSignOutUrl="/"
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
+      signInForceRedirectUrl="/organization"
+      signUpForceRedirectUrl="/organization"
     >
       <html lang="en" suppressHydrationWarning>
         <body
