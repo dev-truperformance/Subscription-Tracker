@@ -158,7 +158,7 @@ export function OrganizationsList({
                         Admin
                       </span>
                     )}
-                    {(org.role === 'member' || org.role === 'org:member') && (
+                    {org.role === 'member' && (
                       <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 flex items-center gap-1">
                         <User className="w-3 h-3" />
                         Member
@@ -184,7 +184,7 @@ export function OrganizationsList({
                 </div>
                 <div className="flex items-center gap-2">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger>
                       <button className="px-3 py-1.5 text-sm border rounded-lg hover:bg-muted transition-all flex items-center gap-2">
                         <MoreHorizontal className="w-4 h-4" />
                       </button>

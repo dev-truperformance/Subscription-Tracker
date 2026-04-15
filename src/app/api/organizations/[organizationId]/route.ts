@@ -3,6 +3,7 @@ import {
   organizationMembers,
   organizations,
 } from '@/lib/db/organization-schema';
+import { users } from '@/lib/db/user-schema';
 import { auth } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // GET /api/organizations/[organizationId] - Get organization details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { organizationId: string } }
+  { params }: { params: Promise<{ organizationId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -19,7 +20,18 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organizationId } = params;
+    const { organizationId } = await params;
+
+    // Get user's internal UUID from Clerk ID
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1);
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     // Check if user is a member of the organization
     const membership = await db
@@ -28,7 +40,7 @@ export async function GET(
       .where(
         and(
           eq(organizationMembers.organizationId, organizationId),
-          eq(organizationMembers.userId, userId)
+          eq(organizationMembers.userId, user.id)
         )
       )
       .limit(1);
@@ -79,16 +91,26 @@ export async function GET(
 // DELETE /api/organizations/[organizationId] - Delete organization
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { organizationId: string } }
+  { params }: { params: Promise<{ organizationId: string }> }
 ) {
   try {
     const { userId } = await auth();
+    const { organizationId } = await params;
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organizationId } = params;
+    // Get user's internal UUID from Clerk ID
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1);
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     // Check if user is an admin of the organization
     const membership = await db
@@ -97,7 +119,7 @@ export async function DELETE(
       .where(
         and(
           eq(organizationMembers.organizationId, organizationId),
-          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.userId, user.id),
           eq(organizationMembers.role, 'admin')
         )
       )

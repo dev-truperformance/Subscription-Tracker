@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import {
-  organizations,
   organizationMembers,
+  organizations,
 } from '@/lib/db/organization-schema';
-import { eq, and } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
+import { NextRequest, NextResponse } from 'next/server';
 
 // POST /api/organizations/[organizationId]/join - Join an organization
 export async function POST(
   request: NextRequest,
-  { params }: { params: { organizationId: string } }
+  { params }: { params: Promise<{ organizationId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -19,7 +19,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { organizationId } = params;
+    const { organizationId } = await params;
 
     // Get organization details
     const [organization] = await db
@@ -49,8 +49,8 @@ export async function POST(
       return NextResponse.json({ error: 'Already a member' }, { status: 400 });
     }
 
-    // For private organizations, check email domain
-    if (organization.visibility === 'private') {
+    // For private organizations, check if user can join
+    if (!organization.isPublic) {
       // Get user's email from Clerk
       const user = await (
         await fetch(`https://api.clerk.dev/v1/users/${userId}`, {
@@ -69,54 +69,31 @@ export async function POST(
         );
       }
 
-      // Get organization creator's email domain
-      const creator = await (
-        await fetch(
-          `https://api.clerk.dev/v1/users/${organization.createdBy}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
-            },
-          }
-        )
-      ).json();
+      // Check allowed domains if specified
+      if (organization.allowedDomains) {
+        const allowedDomains = organization.allowedDomains
+          .split(',')
+          .map((d: string) => d.trim());
+        const userDomain = userEmail.split('@')[1];
 
-      const creatorEmail = creator.email_addresses?.[0]?.email_address;
-
-      if (!creatorEmail) {
-        return NextResponse.json(
-          { error: 'Creator email not found' },
-          { status: 400 }
-        );
-      }
-
-      // Check if domains match
-      const userDomain = userEmail.split('@')[1];
-      const creatorDomain = creatorEmail.split('@')[1];
-
-      if (userDomain !== creatorDomain) {
-        return NextResponse.json(
-          { error: 'Email domain does not match organization domain' },
-          { status: 403 }
-        );
+        if (!allowedDomains.includes(userDomain)) {
+          return NextResponse.json(
+            { error: 'Email domain not allowed for this organization' },
+            { status: 403 }
+          );
+        }
       }
     }
 
-    // Add user as member
+    // Add user as member with Clerk membership ID
+    const clerkMembershipId = `org_${organizationId}_user_${userId}_${Date.now()}`;
+
     await db.insert(organizationMembers).values({
       organizationId,
       userId,
+      clerkMembershipId,
       role: 'member',
     });
-
-    // Update member count
-    await db
-      .update(organizations)
-      .set({
-        memberCount: (organization.memberCount || 0) + 1,
-        updatedAt: new Date(),
-      })
-      .where(eq(organizations.id, organizationId));
 
     return NextResponse.json({ message: 'Successfully joined organization' });
   } catch (error) {
